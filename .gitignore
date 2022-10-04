@@ -1,2 +1,15 @@
 
 .gitattributes
+
+OpenGL/.vs
+OpenGL/Debug
+OpenGL/x64
+OpenGL/OpenGL.sln
+
+OpenGL/OpenGL/Debug
+OpenGL/OpenGL/x64
+OpenGL/OpenGL/OpenGL.vcxproj
+OpenGL/OpenGL/OpenGL.vcxproj.filters
+OpenGL/OpenGL/OpenGL.vcxproj.user
+
+OpenGL/Dependencies/GLEW/doc
