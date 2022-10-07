@@ -9,107 +9,108 @@
 #include "Renderer.h"
 
 #include "VertexBuffer.h"
+#include "VertexBufferLayout.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
+#include "Shader.h"
 
-// 用于一次性返回两个字符串
-struct ShaderProgramSource 
-{
-    std::string VertexSource;
-    std::string FragmentSource;
-};
-
-// 去文件中获取shader源代码
-static ShaderProgramSource ParseShader(const std::string& filepath)
-{
-    std::ifstream stream(filepath);
-
-    enum class ShaderType
-    {
-        NONE = -1, VERTEX = 0, FRAGMENT = 1
-    };
-
-    std::string line;
-    std::stringstream ss[2];    // 存放两个着色器
-    ShaderType type = ShaderType::NONE;     // 默认当前着色器类型为空
-
-    while (getline(stream, line))
-    {
-        if (line.find("#shader") != std::string::npos)
-        {
-            if (line.find("vertex") != std::string::npos)
-            {
-                type = ShaderType::VERTEX;
-            }
-            else if (line.find("fragment") != std::string::npos)
-            {
-                type = ShaderType::FRAGMENT;
-            }
-        }
-        else
-        {
-            ss[(GLint)type] << line << '\n';
-        }
-    }
-
-    return { ss[0].str(), ss[1].str() };
-}
-
-static GLuint CompileShader(GLuint type, const std::string& source)
-{
-    // 决定创建顶点着色器或像素着色器
-    GLuint id = glCreateShader(type);
-    // 读入着色器内容
-    const GLchar* src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    // 编译着色器
-    glCompileShader(id);
-
-    // 错误处理
-    GLint result;
-    // 获取编译状态
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-    // 如果编译出错则进行处理
-    if (result == GL_FALSE) 
-    {
-        GLint length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        GLchar* message = (GLchar*)alloca(length * sizeof(GLchar));   // 栈内存 不需要手动释放
-        glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader !";
-        std::cout << std::endl;
-        // 打印出错相关信息 行数...
-        std::cout << message << std::endl;
-        // 清除shader 可选
-        glDeleteShader(id);
-        return 0;
-    }
-
-    return id;
-}
-
-// 创建着色器
-static GLuint CreateShader(const std::string& vertexShader, const std::string& fragmentShader) 
-{
-    // 状态索引
-    GLuint program = glCreateProgram();
-    // 编译着色器源码
-    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-    // 链接shader
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    // 清除编译后的shader（编译后的shader已经链接）可选
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return program;
-}
-
+//// 用于一次性返回两个字符串
+//struct ShaderProgramSource 
+//{
+//    std::string VertexSource;
+//    std::string FragmentSource;
+//};
+//
+//// 去文件中获取shader源代码
+//static ShaderProgramSource ParseShader(const std::string& filepath)
+//{
+//    std::ifstream stream(filepath);
+//
+//    enum class ShaderType
+//    {
+//        NONE = -1, VERTEX = 0, FRAGMENT = 1
+//    };
+//
+//    std::string line;
+//    std::stringstream ss[2];    // 存放两个着色器
+//    ShaderType type = ShaderType::NONE;     // 默认当前着色器类型为空
+//
+//    while (getline(stream, line))
+//    {
+//        if (line.find("#shader") != std::string::npos)
+//        {
+//            if (line.find("vertex") != std::string::npos)
+//            {
+//                type = ShaderType::VERTEX;
+//            }
+//            else if (line.find("fragment") != std::string::npos)
+//            {
+//                type = ShaderType::FRAGMENT;
+//            }
+//        }
+//        else
+//        {
+//            ss[(GLint)type] << line << '\n';
+//        }
+//    }
+//
+//    return { ss[0].str(), ss[1].str() };
+//}
+//
+//static GLuint CompileShader(GLuint type, const std::string& source)
+//{
+//    // 决定创建顶点着色器或像素着色器
+//    GLuint id = glCreateShader(type);
+//    // 读入着色器内容
+//    const GLchar* src = source.c_str();
+//    glShaderSource(id, 1, &src, nullptr);
+//    // 编译着色器
+//    glCompileShader(id);
+//
+//    // 错误处理
+//    GLint result;
+//    // 获取编译状态
+//    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+//    // 如果编译出错则进行处理
+//    if (result == GL_FALSE) 
+//    {
+//        GLint length;
+//        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+//        GLchar* message = (GLchar*)alloca(length * sizeof(GLchar));   // 栈内存 不需要手动释放
+//        glGetShaderInfoLog(id, length, &length, message);
+//        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader !";
+//        std::cout << std::endl;
+//        // 打印出错相关信息 行数...
+//        std::cout << message << std::endl;
+//        // 清除shader 可选
+//        glDeleteShader(id);
+//        return 0;
+//    }
+//
+//    return id;
+//}
+//
+//// 创建着色器
+//static GLuint CreateShader(const std::string& vertexShader, const std::string& fragmentShader) 
+//{
+//    // 状态索引
+//    GLuint program = glCreateProgram();
+//    // 编译着色器源码
+//    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+//    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+//
+//    // 链接shader
+//    glAttachShader(program, vs);
+//    glAttachShader(program, fs);
+//    glLinkProgram(program);
+//    glValidateProgram(program);
+//
+//    // 清除编译后的shader（编译后的shader已经链接）可选
+//    glDeleteShader(vs);
+//    glDeleteShader(fs);
+//
+//    return program;
+//}
 
 GLint main(void)
 {
@@ -195,7 +196,7 @@ GLint main(void)
         //GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
         //// 将数据存入缓冲区(带个数)
         //GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(GLuint), indices, GL_STATIC_DRAW));
-
+        //
         //// 顶点着色器初始化内容
         //std::string vertexShader =
         //    "#version 330 core\n"
@@ -206,7 +207,7 @@ GLint main(void)
         //    "{\n"
         //    "   gl_Position = position;\n"
         //    "}\n";
-
+        //
         //// 像素着色器初始化内容
         //std::string fragmentShader =
         //    "#version 330 core\n"
@@ -217,31 +218,29 @@ GLint main(void)
         //    "{\n"
         //    "   color = vec4(1.0, 0.0, 0.0, 1.0);\n"
         //    "}\n";
+        
+        Shader shader("res/shaders/Basic.shader");
+        shader.Bind();
+        shader.SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
 
-        ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-        //std::cout << "VERTEX" << std::endl;
-        //std::cout << source.VertexSource << std::endl;
-        //std::cout << "FRAGMENT" << std::endl;
-        //std::cout << source.FragmentSource << std::endl;
-
-
-        GLuint shader = CreateShader(source.VertexSource, source.FragmentSource);
-        GLCall(glUseProgram(shader));
+        // ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+        // GLuint shader = CreateShader(source.VertexSource, source.FragmentSource);
+        // GLCall(glUseProgram(shader));
 
 
-        // 寻找着色器中的统一变量
-        GLCall(int location = glGetUniformLocation(shader, "u_Color"));     // 检索变量位置
-        ASSERT(location != -1);
-        GLCall(glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f));
-
+        //// 寻找着色器中的统一变量
+        //GLCall(int location = glGetUniformLocation(shader, "u_Color"));     // 检索变量位置
+        //ASSERT(location != -1);
+        //GLCall(glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f));
 
         // 解绑所有buffer
         // GLCall(glBindVertexArray(0));
         va.UnBind();
-        GLCall(glUseProgram(0));
+        vb.Unbind();
+        ib.Unbind();
+        shader.UnBind();
 
-        GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-        GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+        Renderer renderer;
 
         float r = 0.0f;
         float increment = 0.05f;
@@ -250,17 +249,14 @@ GLint main(void)
         while (!glfwWindowShouldClose(window))
         {
             /* Render here */
-            GLCall(glClear(GL_COLOR_BUFFER_BIT));
+            renderer.Clear();
 
+            shader.Bind();
+            shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
-            GLCall(glUseProgram(shader));
-            GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
-
-            // GLCall(glBindVertexArray(vao));
-
-            va.Bind();
-            ib.Bind();
-            // GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+            renderer.Draw(va, ib, shader);
+            //va.Bind();
+            //ib.Bind();
 
             // 任何索引缓冲都需要是无符号数
             GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
@@ -279,8 +275,6 @@ GLint main(void)
             glfwPollEvents();
         }
 
-        // 清除shader
-        glDeleteProgram(shader);
     }
     glfwTerminate();
     return 0;
