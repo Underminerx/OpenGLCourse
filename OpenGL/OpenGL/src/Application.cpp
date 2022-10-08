@@ -13,6 +13,7 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "Texture.h"
 
 //// 用于一次性返回两个字符串
 //struct ShaderProgramSource 
@@ -151,13 +152,22 @@ GLint main(void)
     // 控制台输出OpenGL版本信息
     std::cout << glGetString(GL_VERSION) << std::endl;
     {
-        // 定义顶点数组
+        //// 定义顶点数组
+        //GLfloat positions[] = {
+        //    -0.5f, -0.5f, 0.0f, 0.0f,    // 0
+        //     0.5f, -0.5f, 1.0f, 0.0f,    // 1
+        //     0.5f,  0.5f, 1.0f, 1.0f,    // 2
+        //    -0.5f,  0.5f, 0.0f, 1.0f     // 3
+        //};
+
+        // 定义顶点数组(大一点的图)
         GLfloat positions[] = {
-            -0.5f, -0.5f,   // 0
-             0.5f, -0.5f,   // 1
-             0.5f,  0.5f,   // 2
-            -0.5f,  0.5f,   // 3
+             0.0f,  0.0f, 0.0f, 0.0f,    // 0
+             1.0f,  0.0f, 2.0f, 0.0f,    // 1
+             1.0f,  1.0f, 2.0f, 2.0f,    // 2
+             0.0f,  1.0f, 0.0f, 2.0f     // 3
         };
+
 
         // 根据顶点索引绘制
         GLuint indices[] = {
@@ -165,15 +175,20 @@ GLint main(void)
             2, 3, 0
         };
 
+        GLCall(glEnable(GL_BLEND));
+        // 翻转alpha值 (1 - α)
+        GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
         //// 使用GLFW_OPENGL_CORE_PROFILE时绑定一个缓冲区作为指定布局
         //GLuint vao;
         //GLCall(glGenVertexArrays(1, &vao));
         //GLCall(glBindVertexArray(vao));
 
         VertexArray va;
-        VertexBuffer vb(positions, 4 * 2 * sizeof(GLfloat));
+        VertexBuffer vb(positions, 4 * 4 * sizeof(GLfloat));
 
         VertexBufferLayout layout;
+        layout.Push<float>(2);
         layout.Push<float>(2);
         va.AddBuffer(vb, layout);
 
@@ -227,14 +242,10 @@ GLint main(void)
         // GLuint shader = CreateShader(source.VertexSource, source.FragmentSource);
         // GLCall(glUseProgram(shader));
 
+        Texture texture("res/textures/Picture.png");
+        texture.Bind();
+        shader.SetUniform1i("u_Texture", 0);
 
-        //// 寻找着色器中的统一变量
-        //GLCall(int location = glGetUniformLocation(shader, "u_Color"));     // 检索变量位置
-        //ASSERT(location != -1);
-        //GLCall(glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f));
-
-        // 解绑所有buffer
-        // GLCall(glBindVertexArray(0));
         va.UnBind();
         vb.Unbind();
         ib.Unbind();
