@@ -15,6 +15,9 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 //// 用于一次性返回两个字符串
 //struct ShaderProgramSource 
 //{
@@ -162,10 +165,10 @@ GLint main(void)
 
         // 定义顶点数组(大一点的图)
         GLfloat positions[] = {
-             0.0f,  0.0f, 0.0f, 0.0f,    // 0
-             1.0f,  0.0f, 2.0f, 0.0f,    // 1
-             1.0f,  1.0f, 2.0f, 2.0f,    // 2
-             0.0f,  1.0f, 0.0f, 2.0f     // 3
+             0.0f,  0.0f, 0.0f, 0.0f,    // 0 左下
+             1.0f,  0.0f, 2.0f, 0.0f,    // 1 右下
+             1.0f,  1.0f, 2.0f, 2.0f,    // 2 右上
+             0.0f,  1.0f, 0.0f, 2.0f     // 3 左上
         };
 
 
@@ -203,6 +206,8 @@ GLint main(void)
 
         IndexBuffer ib(indices, 6);
 
+        glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+
         //// 定义缓冲区长度 
         //GLuint ibo;     // Index Buffer Object
         //// 定义缓冲区
@@ -237,6 +242,7 @@ GLint main(void)
         Shader shader("res/shaders/Basic.shader");
         shader.Bind();
         shader.SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
+        shader.SetUniformMat4f("u_MVP", proj);
 
         // ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
         // GLuint shader = CreateShader(source.VertexSource, source.FragmentSource);
