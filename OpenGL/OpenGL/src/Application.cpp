@@ -18,6 +18,9 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw_gl3.h"
+
 //// 用于一次性返回两个字符串
 //struct ShaderProgramSource 
 //{
@@ -133,7 +136,7 @@ GLint main(void)
 
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "test", NULL, NULL);
+    window = glfwCreateWindow(1280, 720, "test", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -157,18 +160,18 @@ GLint main(void)
     {
         //// 定义顶点数组
         //GLfloat positions[] = {
-        //    -0.5f, -0.5f, 0.0f, 0.0f,    // 0
-        //     0.5f, -0.5f, 1.0f, 0.0f,    // 1
-        //     0.5f,  0.5f, 1.0f, 1.0f,    // 2
-        //    -0.5f,  0.5f, 0.0f, 1.0f     // 3
+        //     100.0f,  100.0f, 0.0f, 0.0f,    // 0
+        //     200.0f,  100.0f, 1.0f, 0.0f,    // 1
+        //     200.0f,  200.0f, 1.0f, 1.0f,    // 2
+        //     100.0f,  200.0f, 0.0f, 1.0f     // 3
         //};
 
         // 定义顶点数组(大一点的图)
         GLfloat positions[] = {
-             0.0f,  0.0f, 0.0f, 0.0f,    // 0 左下
-             1.0f,  0.0f, 2.0f, 0.0f,    // 1 右下
-             1.0f,  1.0f, 2.0f, 2.0f,    // 2 右上
-             0.0f,  1.0f, 0.0f, 2.0f     // 3 左上
+             340.0f,   60.0f,  0.0f,  0.0f,    // 0 左下
+             940.0f,   60.0f,  2.0f,  0.0f,    // 1 右下
+             940.0f,  660.0f,  2.0f,  2.0f,    // 2 右上
+             340.0f,  660.0f,  0.0f,  2.0f     // 3 左上
         };
 
 
@@ -206,8 +209,10 @@ GLint main(void)
 
         IndexBuffer ib(indices, 6);
 
-        glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
-
+        glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f, -1.0f, 1.0f);
+        
+        glm::mat4 view  =  glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0, 0));        // 视窗向左移动100单位
+        
         //// 定义缓冲区长度 
         //GLuint ibo;     // Index Buffer Object
         //// 定义缓冲区
@@ -242,7 +247,6 @@ GLint main(void)
         Shader shader("res/shaders/Basic.shader");
         shader.Bind();
         shader.SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
-        shader.SetUniformMat4f("u_MVP", proj);
 
         // ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
         // GLuint shader = CreateShader(source.VertexSource, source.FragmentSource);
@@ -259,6 +263,12 @@ GLint main(void)
 
         Renderer renderer;
 
+        ImGui::CreateContext();
+        ImGui_ImplGlfwGL3_Init(window, true);
+        ImGui::StyleColorsDark();
+
+        glm::vec3 translation(200, 200, 0);
+        
         float r = 0.0f;
         float increment = 0.05f;
 
@@ -268,8 +278,14 @@ GLint main(void)
             /* Render here */
             renderer.Clear();
 
+            ImGui_ImplGlfwGL3_NewFrame();
+
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);      // 模型向右上移动100单位
+            glm::mat4 mvp = proj * view * model;
+
             shader.Bind();
             shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
+            shader.SetUniformMat4f("u_MVP", mvp);
 
             renderer.Draw(va, ib, shader);
             //va.Bind();
@@ -285,6 +301,17 @@ GLint main(void)
 
             r += increment;
 
+            // 渲染UI
+            {
+                // 连续一个float指针 指向translation的第一个位置 后续两个位置自动匹配
+                ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 960.0f);
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            }
+
+            ImGui::Render();
+            ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
+
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
 
@@ -293,6 +320,10 @@ GLint main(void)
         }
 
     }
+
+    ImGui_ImplGlfwGL3_Shutdown();
+    ImGui::DestroyContext();
+
     glfwTerminate();
     return 0;
 }

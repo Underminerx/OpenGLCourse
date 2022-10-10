@@ -13,3 +13,4 @@ OpenGL/OpenGL/OpenGL.vcxproj.filters
 OpenGL/OpenGL/OpenGL.vcxproj.user
 
 OpenGL/Dependencies/GLEW/doc
+OpenGL/OpenGL/imgui.ini
