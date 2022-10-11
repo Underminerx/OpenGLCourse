@@ -21,6 +21,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw_gl3.h"
 
+#include "tests/TestClearColor.h"
+
 //// 用于一次性返回两个字符串
 //struct ShaderProgramSource 
 //{
@@ -158,21 +160,23 @@ GLint main(void)
     // 控制台输出OpenGL版本信息
     std::cout << glGetString(GL_VERSION) << std::endl;
     {
-        //// 定义顶点数组
-        //GLfloat positions[] = {
-        //     100.0f,  100.0f, 0.0f, 0.0f,    // 0
-        //     200.0f,  100.0f, 1.0f, 0.0f,    // 1
-        //     200.0f,  200.0f, 1.0f, 1.0f,    // 2
-        //     100.0f,  200.0f, 0.0f, 1.0f     // 3
-        //};
 
-        // 定义顶点数组(大一点的图)
+        /*
+        // 定义顶点数组
         GLfloat positions[] = {
-             340.0f,   60.0f,  0.0f,  0.0f,    // 0 左下
-             940.0f,   60.0f,  2.0f,  0.0f,    // 1 右下
-             940.0f,  660.0f,  2.0f,  2.0f,    // 2 右上
-             340.0f,  660.0f,  0.0f,  2.0f     // 3 左上
+           -50.0f,  -50.0f,  0.0f,  0.0f,    // 0 左下
+            50.0f,  -50.0f,  2.0f,  0.0f,    // 1 右下
+            50.0f,   50.0f,  2.0f,  2.0f,    // 2 右上
+           -50.0f,   50.0f,  0.0f,  2.0f     // 3 左上
         };
+
+        //// 定义顶点数组(大一点的图)
+        //GLfloat positions[] = {
+        //     340.0f,   60.0f,  0.0f,  0.0f,    // 0 左下
+        //     940.0f,   60.0f,  2.0f,  0.0f,    // 1 右下
+        //     940.0f,  660.0f,  2.0f,  2.0f,    // 2 右上
+        //     340.0f,  660.0f,  0.0f,  2.0f     // 3 左上
+        //};
 
 
         // 根据顶点索引绘制
@@ -180,7 +184,7 @@ GLint main(void)
             0, 1, 2,
             2, 3, 0
         };
-
+        */
         GLCall(glEnable(GL_BLEND));
         // 翻转alpha值 (1 - α)
         GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -190,6 +194,7 @@ GLint main(void)
         //GLCall(glGenVertexArrays(1, &vao));
         //GLCall(glBindVertexArray(vao));
 
+        /*
         VertexArray va;
         VertexBuffer vb(positions, 4 * 4 * sizeof(GLfloat));
 
@@ -211,7 +216,7 @@ GLint main(void)
 
         glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f, -1.0f, 1.0f);
         
-        glm::mat4 view  =  glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0, 0));        // 视窗向左移动100单位
+        glm::mat4 view  =  glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));        // 视窗向左移动100单位
         
         //// 定义缓冲区长度 
         //GLuint ibo;     // Index Buffer Object
@@ -260,6 +265,7 @@ GLint main(void)
         vb.Unbind();
         ib.Unbind();
         shader.UnBind();
+        */
 
         Renderer renderer;
 
@@ -267,33 +273,75 @@ GLint main(void)
         ImGui_ImplGlfwGL3_Init(window, true);
         ImGui::StyleColorsDark();
 
-        glm::vec3 translation(200, 200, 0);
-        
-        float r = 0.0f;
-        float increment = 0.05f;
+        //glm::vec3 translationA(200, 200, 0);
+        //glm::vec3 translationB(400, 200, 0);
 
-        /* Loop until the user closes the window */
+        //float r = 0.0f;
+        //float increment = 0.05f;
+
+        // 指针指向当前test
+        test::Test* currentTest = nullptr;
+        test::TestMenu* testMenu = new test::TestMenu(currentTest);
+        currentTest = testMenu;
+
+        testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+
+        // test::TestClearColor test;
+
         while (!glfwWindowShouldClose(window))
         {
-            /* Render here */
+            
+            GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
             renderer.Clear();
+
+            // test.OnUpdate(0.0f);
+            // test.OnRender();
 
             ImGui_ImplGlfwGL3_NewFrame();
 
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);      // 模型向右上移动100单位
-            glm::mat4 mvp = proj * view * model;
+            if (currentTest)
+            {
+                currentTest->OnUpdate(0.0f);
+                currentTest->OnRender();
+                ImGui::Begin("Test");
+                // 返回菜单
+                if (currentTest != testMenu && ImGui::Button("<-"))
+                {
+                    delete currentTest;
+                    currentTest = testMenu;
+                }
+                currentTest->OnImGuiRender();
 
-            shader.Bind();
-            shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
-            shader.SetUniformMat4f("u_MVP", mvp);
+                ImGui::End();
+            }
 
-            renderer.Draw(va, ib, shader);
-            //va.Bind();
-            //ib.Bind();
+            // test.OnImGuiRender();
+
+            /*
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+                glm::mat4 mvp = proj * view * model;
+                shader.Bind();
+                shader.SetUniformMat4f("u_MVP", mvp);
+                // 根据vertexArray与indexBuffer内容利用shader渲染图形
+                renderer.Draw(va, ib, shader);
+
+            }
+
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
+                glm::mat4 mvp = proj * view * model;
+                shader.Bind();
+                shader.SetUniformMat4f("u_MVP", mvp);
+                // 根据vertexArray与indexBuffer内容利用shader渲染图形
+                renderer.Draw(va, ib, shader);
+
+            }
 
             // 任何索引缓冲都需要是无符号数
             GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
+            // 渐变动画
             if (r > 1.0f)
                 increment = -0.05f;
             else if (r < 0.0f)
@@ -304,21 +352,22 @@ GLint main(void)
             // 渲染UI
             {
                 // 连续一个float指针 指向translation的第一个位置 后续两个位置自动匹配
-                ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 960.0f);
+                ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 960.0f);
+                ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 960.0f);
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             }
+            */
 
             ImGui::Render();
             ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
 
-            /* Swap front and back buffers */
             glfwSwapBuffers(window);
-
-            /* Poll for and process events */
             glfwPollEvents();
         }
-
+        delete currentTest;
+        if (currentTest != testMenu)
+            delete testMenu;
     }
 
     ImGui_ImplGlfwGL3_Shutdown();
