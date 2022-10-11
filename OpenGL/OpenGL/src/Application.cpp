@@ -276,6 +276,7 @@ GLint main(void)
         //glm::vec3 translationA(200, 200, 0);
         //glm::vec3 translationB(400, 200, 0);
 
+        //小动画参数
         //float r = 0.0f;
         //float increment = 0.05f;
 
