@@ -22,6 +22,7 @@
 #include "imgui/imgui_impl_glfw_gl3.h"
 
 #include "tests/TestClearColor.h"
+#include "tests/TestTexture2D.h"
 
 //// 用于一次性返回两个字符串
 //struct ShaderProgramSource 
@@ -286,6 +287,7 @@ GLint main(void)
         currentTest = testMenu;
 
         testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+        testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
 
         // test::TestClearColor test;
 
